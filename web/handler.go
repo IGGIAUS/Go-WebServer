@@ -16,17 +16,25 @@ type CustomNotFoundHandler struct{}
 
 // Custom Handler that separates different methods into their own handler functions
 type HttpMethodHandler struct {
-	Get    RequestHandler
-	Put    RequestHandler
-	Post   RequestHandler
-	Delete RequestHandler
+	Get     RequestHandler
+	Put     RequestHandler
+	Post    RequestHandler
+	Patch   RequestHandler
+	Delete  RequestHandler
+	Options RequestHandler
 }
 
 // The function that is called on the handler when a request arrives that needs to be handled
 func (handler *HttpMethodHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	web.LogRequest(request)
 	// TODO: AuthKey
 
 	// TODO: Check the incomming request for the "application/json" header value
+
+	//header
+	writer.Header().Add("Content-Type", "application/json")
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+	writer.Header().Set("Access-Control-Allow-Methods", allowedMethords(handler))
 
 	// Find the handler function that'll get called
 	var handlerFunc RequestHandler = nil
@@ -37,15 +45,16 @@ func (handler *HttpMethodHandler) ServeHTTP(writer http.ResponseWriter, request 
 		handlerFunc = handler.Put
 	case "POST":
 		handlerFunc = handler.Post
+	case "PATCH":
+		handlerFunc = handler.Patch
 	case "DELETE":
 		handlerFunc = handler.Delete
 	case "OPTIONS":
+		handlerFunc = handler.Options
 	}
 
 	// If not valid handler was found then return a MethodNotAllowed
 	if handlerFunc == nil {
-		writer.Header().Set("Access-Control-Allow-Origin", "*")
-		writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE")
 		writer.WriteHeader(http.StatusMethodNotAllowed)
 	} else {
 		// Call the handler
@@ -60,12 +69,6 @@ func (handler *HttpMethodHandler) ServeHTTP(writer http.ResponseWriter, request 
 			}
 		}
 
-		// Set headers
-		writer.Header().Add("Content-Type", "application/json")
-
-		// CORS headers (Dark Magic)
-		writer.Header().Set("Access-Control-Allow-Origin", "*")
-		writer.Header().Set("Access-Control-Allow-Methods", allowedMethords(handler))
 		// Set the response status code
 		writer.WriteHeader(statusCode)
 
@@ -76,19 +79,21 @@ func (handler *HttpMethodHandler) ServeHTTP(writer http.ResponseWriter, request 
 
 func (handler *CustomNotFoundHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	web.LogRequest(request)
+	writer.Header().Add("Content-Type", "application/json")
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	writer.WriteHeader(http.StatusNotFound)
-	writer.Write([]byte("404 - not found"))
+	writer.Write([]byte("{\"Error\": \"404 - not found\"}"))
 }
 
-//Returns a string in the
+//Returns a string in the requred format for allowed method
 func allowedMethords(handler *HttpMethodHandler) string {
 	methods := ""
 	commer := false
 	if handler.Get != nil {
-		methods += "GET"
+		methods += "GET, HEAD"
 		commer = true
 	}
-	if handler.Get != nil {
+	if handler.Post != nil {
 		if commer == true {
 			methods += ", "
 		} else {
@@ -96,7 +101,7 @@ func allowedMethords(handler *HttpMethodHandler) string {
 		}
 		methods += "POST"
 	}
-	if handler.Get != nil {
+	if handler.Put != nil {
 		if commer == true {
 			methods += ", "
 		} else {
@@ -104,7 +109,7 @@ func allowedMethords(handler *HttpMethodHandler) string {
 		}
 		methods += "PUT"
 	}
-	if handler.Get != nil {
+	if handler.Delete != nil {
 		if commer == true {
 			methods += ", "
 		} else {
@@ -112,15 +117,23 @@ func allowedMethords(handler *HttpMethodHandler) string {
 		}
 		methods += "DELETE"
 	}
-	if commer == true {
-		methods += ", "
+	if handler.Patch != nil {
+		if commer == true {
+			methods += ", "
+		}
+		methods += "PATCH"
 	}
-	methods += "OPTIONS"
+	if handler.Options != nil {
+		if commer == true {
+			methods += ", "
+		}
+		methods += "OPTIONS"
+	}
 	return methods
 }
 
 // Converts a struct to JSON and returns it. If the conversion fails then an
-// emoty string is returned instead
+// empty string is returned instead
 func toJson(object interface{}) []byte {
 	jsonBytes, _ := json.Marshal(object)
 	return jsonBytes
