@@ -28,13 +28,18 @@ type HttpMethodHandler struct {
 func (handler *HttpMethodHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	web.LogRequest(request)
 	// TODO: AuthKey
+	//authkey := GetUrlParameter(request, "access_token")
 
-	// TODO: Check the incomming request for the "application/json" header value
-
-	//header
+	//headers
 	writer.Header().Add("Content-Type", "application/json")
 	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	writer.Header().Set("Access-Control-Allow-Methods", allowedMethords(handler))
+
+	// Check the incomming request for the "application/json" header value
+	if request.Header["Content-Type"][0] != "application/json" {
+		writer.WriteHeader(http.StatusUnsupportedMediaType)
+		return
+	}
 
 	// Find the handler function that'll get called
 	var handlerFunc RequestHandler = nil

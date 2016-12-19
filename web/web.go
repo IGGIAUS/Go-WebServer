@@ -31,6 +31,10 @@ func GetBody(request *http.Request) []byte {
 	}
 }
 
+func GetUrlParameter(request *http.Request, parameter string) string {
+	return request.URL.Query().Get(parameter)
+}
+
 // Returns an Ok status code with a JSON payload response (Code: 200)
 func Ok(object interface{}) (interface{}, int) {
 	return object, http.StatusOK
