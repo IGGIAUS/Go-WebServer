@@ -46,6 +46,9 @@ func (handler *HttpMethodHandler) ServeHTTP(writer http.ResponseWriter, request 
 	switch request.Method {
 	case "GET":
 		handlerFunc = handler.Get
+	case "HEAD":
+		writer.WriteHeader(http.StatusOK)
+		return
 	case "PUT":
 		handlerFunc = handler.Put
 	case "POST":
