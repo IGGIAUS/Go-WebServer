@@ -6,9 +6,10 @@ Defaults to port 8000 can be changed by changing the constant in main.go
 
 To add you functions to the server you call Register on the mux in the routeConfig method in main.go.
 
+E.G:
 mux.Register(path String, handler web.HttpMethodHandler)
 
-for more information go to https://github.com/gorilla/mux
+For more information go to https://github.com/gorilla/mux
 
-you can add your functions to the handler providing they match the type of web.RequestHandler.
+You can add your functions to the handler providing they match the type of web.RequestHandler.
 The handler can have these functions assigned to any of its below properties

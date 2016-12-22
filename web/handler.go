@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/IGGIAUS/Webservices/web"
+	"github.com/IGGIAUS/Go-WebServer/web"
 )
 
 // Handles the JSON web service request for a specific http method.
